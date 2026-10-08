@@ -1,0 +1,39 @@
+Sharding a Search Index Across Peers Without a Coordinator
+Authors: Daniel Okafor, Priya Nair and Tomas Varga
+Contact: priya.nair@synapse-demo.example.org
+Published: 2025
+Note: sample document written for the Synapse demo corpus; the references are real.
+
+Abstract
+We describe a small peer-to-peer search system in which every participant runs an identical node holding one
+shard of the index. Documents are placed with rendezvous hashing, queries are broadcast to all peers in parallel
+and merged by score, and global statistics are recomputed by whichever peer leads a rebuild. We relate the design
+to distributed hash tables, consistent hashing and large-scale data processing systems.
+
+Keywords: peer-to-peer, sharding, consistent hashing, distributed search
+
+1 Placement
+Chord maps keys onto a ring of nodes and finds the owner of any key in a logarithmic number of hops [1]. Consistent
+hashing, introduced for web caching, guarantees that adding a node moves only a small fraction of keys [2], and
+rendezvous (highest-random-weight) hashing achieves the same property without a ring by picking the node with
+the largest hash of node and key [3]. Dynamo combines consistent hashing with replication to stay available when
+nodes fail [4].
+
+2 Query processing
+Broadcasting a query to every shard and merging the partial top-k lists mirrors the map and reduce phases of
+MapReduce [5]. Shards must agree on term statistics, otherwise scores from different nodes are not comparable; a
+leader collects document frequencies, computes global weights and broadcasts them [5, 6]. Ordering such updates
+needs a notion of time across machines, which logical clocks provide [7].
+
+3 Discussion
+Without replication a failed peer makes its shard unavailable; the remaining peers still answer [1-4]. Storage
+systems such as the Google File System show how replication can be layered on later [6].
+
+References
+[1] I. Stoica, R. Morris, D. Karger, M. F. Kaashoek, and H. Balakrishnan. Chord: A scalable peer-to-peer lookup service for internet applications. In Proceedings of ACM SIGCOMM, 2001.
+[2] D. Karger, E. Lehman, T. Leighton, R. Panigrahy, M. Levine, and D. Lewin. Consistent hashing and random trees: distributed caching protocols for relieving hot spots on the World Wide Web. In Proceedings of STOC, 1997.
+[3] D. G. Thaler and C. V. Ravishankar. Using name-based mappings to increase hit rates. IEEE/ACM Transactions on Networking, 6(1):1-14, 1998.
+[4] G. DeCandia et al. Dynamo: Amazon's highly available key-value store. In Proceedings of SOSP, 2007. doi:10.1145/1294261.1294281
+[5] J. Dean and S. Ghemawat. MapReduce: simplified data processing on large clusters. Communications of the ACM, 51(1):107-113, 2008.
+[6] S. Ghemawat, H. Gobioff, and S.-T. Leung. The Google file system. In Proceedings of SOSP, 2003.
+[7] L. Lamport. Time, clocks, and the ordering of events in a distributed system. Communications of the ACM, 21(7):558-565, 1978.

@@ -1,0 +1,40 @@
+From Latent Semantic Analysis to Contextual Embeddings: Matching Concepts Instead of Words
+Authors: Mei Lin and Tomas Varga
+Contact: mei.lin@synapse-demo.example.org
+Published: 2025
+Note: sample document written for the Synapse demo corpus; the references are real.
+
+Abstract
+Keyword search fails when a user asks for "car" and the relevant paper only says "automobile" or "vehicle". This
+note traces how retrieval moved from matching words to matching concepts: latent semantic analysis factorises the
+term-document matrix with a truncated singular value decomposition, probabilistic topic models give the factors a
+generative story, and neural embeddings learn dense vectors directly from text.
+
+Keywords: latent semantic analysis, singular value decomposition, topic models, word embeddings
+
+1 Latent semantic analysis
+Latent semantic indexing applies a truncated SVD to the TF-IDF weighted term-document matrix and keeps around
+one hundred factors [1]. Queries are folded into the same space, so documents can match without sharing a single
+term with the query. The same mathematics was later argued to explain how people acquire word meaning from
+co-occurrence (Landauer and Dumais, 1997), which we cite as [2].
+
+2 Probabilistic topic models
+Probabilistic latent semantic indexing recasts the factors as latent topics with a proper likelihood [3], and
+latent Dirichlet allocation adds priors so that unseen documents receive topic mixtures [4]. Both remain popular
+for exploring large collections [3, 4].
+
+3 Neural embeddings
+Word2vec learns word vectors by predicting context words and made semantic similarity cheap to compute [5];
+GloVe factorises global co-occurrence counts instead [6]. Attention-based transformers [7] and their pre-trained
+encoders [8] produce contextual vectors that now power semantic search (arXiv:1706.03762). The lineage from
+SVD [1] to embeddings [5-8] is direct: all of them compress co-occurrence statistics.
+
+References
+[1] S. Deerwester, S. T. Dumais, G. W. Furnas, T. K. Landauer, and R. Harshman. Indexing by latent semantic analysis. Journal of the American Society for Information Science, 41(6):391-407, 1990.
+[2] T. K. Landauer and S. T. Dumais. A solution to Plato's problem: The latent semantic analysis theory of acquisition, induction, and representation of knowledge. Psychological Review, 104(2):211-240, 1997.
+[3] T. Hofmann. Probabilistic latent semantic indexing. In Proceedings of SIGIR, pages 50-57, 1999.
+[4] D. M. Blei, A. Y. Ng, and M. I. Jordan. Latent Dirichlet allocation. Journal of Machine Learning Research, 3:993-1022, 2003.
+[5] T. Mikolov, K. Chen, G. Corrado, and J. Dean. Efficient estimation of word representations in vector space. arXiv:1301.3781, 2013.
+[6] J. Pennington, R. Socher, and C. D. Manning. GloVe: Global vectors for word representation. In Proceedings of EMNLP, pages 1532-1543, 2014.
+[7] A. Vaswani et al. Attention is all you need. In Advances in Neural Information Processing Systems, 2017.
+[8] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova. BERT: Pre-training of deep bidirectional transformers for language understanding. In Proceedings of NAACL, 2019. doi:10.18653/v1/N19-1423

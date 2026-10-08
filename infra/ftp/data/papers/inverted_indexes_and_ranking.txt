@@ -1,0 +1,46 @@
+Inverted Indexes and Link Analysis for Ranked Retrieval
+Authors: Asha Raman, Daniel Okafor and Mei Lin
+Contact: asha.raman@synapse-demo.example.org, d.okafor@synapse-demo.example.org
+Published: 2024
+Note: sample document written for the Synapse demo corpus; the references are real.
+
+Abstract
+Search engines answer queries in milliseconds because they never scan documents at query time. We review the
+inverted index, the data structure that maps every term to the documents containing it, and the two families of
+signals used to rank what it returns: content scores such as TF-IDF and BM25, and link-analysis scores such as
+PageRank and HITS. We show how both fit on a laptop-sized corpus and release our code at
+https://example.org/synapse/ranking-notes.
+
+Keywords: inverted index, vector space model, BM25, PageRank, autocomplete
+
+1 Introduction
+The vector space model treats documents and queries as weighted term vectors and ranks by the cosine of the angle
+between them [1]. Term weighting matters as much as the model itself: inverse document frequency rewards rare
+terms, and length normalisation stops long documents from dominating [2]. The probabilistic relevance framework
+replaced ad-hoc weights with a model of relevance, and BM25 remains a strong baseline today [3].
+
+2 Indexes and query processing
+An inverted index stores, for each term, a postings list of document identifiers, often with the positions of each
+occurrence so that phrase queries can be answered by intersecting positions [1, 2]. Boolean queries such as
+"retrieval AND ranking NOT images" become set operations on postings lists. Before indexing, words are reduced to
+stems with suffix-stripping rules so that "connection", "connected" and "connecting" share an entry [4].
+Autocomplete is served from a trie, the prefix tree first described as a memory structure for symbol tables [5].
+
+3 Link analysis
+Content scores ignore how documents refer to each other. PageRank models a random surfer following links and
+ranks pages by the stationary probability of visiting them [6]; HITS separates hubs, which point to good
+pages, from authorities, which are pointed to by good hubs [7]. On a citation graph the same algorithms identify
+influential papers [6-7].
+
+4 Conclusion
+Combining content scores [1-3] with link analysis [6, 7] gives robust rankings even for small collections.
+DOIs for the core papers are listed below; for example the vector space model is doi:10.1145/361219.361220.
+
+References
+[1] G. Salton, A. Wong, and C. S. Yang. A vector space model for automatic indexing. Communications of the ACM, 18(11):613-620, 1975.
+[2] G. Salton and C. Buckley. Term-weighting approaches in automatic text retrieval. Information Processing & Management, 24(5):513-523, 1988.
+[3] S. Robertson and H. Zaragoza. The probabilistic relevance framework: BM25 and beyond. Foundations and Trends in Information Retrieval, 3(4):333-389, 2009.
+[4] M. F. Porter. An algorithm for suffix stripping. Program, 14(3):130-137, 1980.
+[5] E. Fredkin. Trie memory. Communications of the ACM, 3(9):490-499, 1960.
+[6] S. Brin and L. Page. The anatomy of a large-scale hypertextual Web search engine. Computer Networks and ISDN Systems, 30(1-7):107-117, 1998.
+[7] J. M. Kleinberg. Authoritative sources in a hyperlinked environment. Journal of the ACM, 46(5):604-632, 1999.

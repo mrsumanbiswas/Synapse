@@ -1,0 +1,14 @@
+# Web API
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+PyJWT==2.15.1
+
+# Research math, graphs and plots
+numpy==2.5.3
+scipy==1.18.1
+networkx==3.7
+matplotlib==3.11.2
+
+# File processing
+pypdf==6.19.0

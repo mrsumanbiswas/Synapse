@@ -1,0 +1,56 @@
+# One Synapse node per team member. Run this on each laptop with its own .env:
+#
+#   cp deploy/.env.example deploy/.env      # then edit NODE_ID, ADVERTISE_HOST, PEERS
+#   docker compose -f deploy/compose.node.yaml --env-file deploy/.env up --build
+#
+# The laptops must reach each other on TCP 7000 (peer protocol). The UI is on port 3000.
+name: synapse-node
+
+services:
+  node:
+    build:
+      context: ../backend
+    image: localhost/synapse-backend:latest
+    restart: unless-stopped
+    hostname: ${NODE_ID:?set NODE_ID in deploy/.env}
+    environment:
+      SYNAPSE_NODE_ID: ${NODE_ID}
+      SYNAPSE_NODE_NAME: ${NODE_NAME:-}
+      SYNAPSE_ADVERTISE: ${ADVERTISE_HOST:?set ADVERTISE_HOST to this laptop's LAN address}:7000
+      SYNAPSE_PEERS: ${PEERS:-}
+      SYNAPSE_CLUSTER_SECRET: ${CLUSTER_SECRET:?every node of the team must share CLUSTER_SECRET}
+      SYNAPSE_ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      SYNAPSE_ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SYNAPSE_SEED_SAMPLE: ${SEED_SAMPLE:-false}
+      SYNAPSE_PUBLIC_URL: http://${ADVERTISE_HOST}:3000
+      SYNAPSE_SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SYNAPSE_SMTP_PORT: ${SMTP_PORT:-1025}
+      SYNAPSE_SMTP_USER: ${SMTP_USER:-}
+      SYNAPSE_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SYNAPSE_SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      SYNAPSE_MAIL_FROM: ${MAIL_FROM:-Synapse <alerts@synapse.local>}
+    ports:
+      - "7000:7000"
+    volumes:
+      - node-data:/data
+
+  web:
+    build:
+      context: ../frontend
+    image: localhost/synapse-frontend:latest
+    restart: unless-stopped
+    environment:
+      SYNAPSE_API_UPSTREAM: node:8000
+    ports:
+      - "3000:80"
+    depends_on:
+      - node
+
+  mailpit:
+    image: docker.io/axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+
+volumes:
+  node-data:

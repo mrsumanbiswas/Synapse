@@ -1,0 +1,119 @@
+# Synapse demo cluster: three peer nodes, a web UI for each, a mail catcher and an FTP server.
+#
+#   docker compose up --build        (or: podman-compose up --build)
+#
+#   http://localhost:3000   UI talking to node-a      http://localhost:8025   Mailpit (alert e-mails)
+#   http://localhost:3001   UI talking to node-b      http://localhost:3000/api/docs   API docs
+#   http://localhost:3002   UI talking to node-c
+name: synapse
+
+x-node: &node
+  build:
+    context: ./backend
+  image: localhost/synapse-backend:latest
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4)"]
+    interval: 10s
+    timeout: 5s
+    retries: 12
+    start_period: 40s
+
+x-node-env: &node-env
+  SYNAPSE_CLUSTER_SECRET: ${SYNAPSE_CLUSTER_SECRET:-change-me-in-.env}
+  SYNAPSE_ADMIN_EMAIL: ${SYNAPSE_ADMIN_EMAIL:-admin@synapse.local}
+  SYNAPSE_ADMIN_PASSWORD: ${SYNAPSE_ADMIN_PASSWORD:-synapse-admin}
+  SYNAPSE_SMTP_HOST: mailpit
+  SYNAPSE_SMTP_PORT: "1025"
+  SYNAPSE_MAIL_FROM: Synapse <alerts@synapse.local>
+  SYNAPSE_LSA_DIMS: ${SYNAPSE_LSA_DIMS:-100}
+  SYNAPSE_TOPICS: ${SYNAPSE_TOPICS:-14}
+  SYNAPSE_LOG_LEVEL: ${SYNAPSE_LOG_LEVEL:-INFO}
+
+x-web: &web
+  build:
+    context: ./frontend
+  image: localhost/synapse-frontend:latest
+  restart: unless-stopped
+
+services:
+  node-a:
+    <<: *node
+    hostname: node-a
+    environment:
+      <<: *node-env
+      SYNAPSE_NODE_ID: node-a
+      SYNAPSE_ADVERTISE: node-a:7000
+      SYNAPSE_PEERS: node-b:7000,node-c:7000
+      SYNAPSE_SEED_SAMPLE: "true" # imports the bundled OpenAlex corpus when the cluster is empty
+      SYNAPSE_PUBLIC_URL: http://localhost:3000
+    volumes:
+      - node-a-data:/data
+
+  node-b:
+    <<: *node
+    hostname: node-b
+    environment:
+      <<: *node-env
+      SYNAPSE_NODE_ID: node-b
+      SYNAPSE_ADVERTISE: node-b:7000
+      SYNAPSE_PEERS: node-a:7000 # node-c is discovered through gossip
+      SYNAPSE_PUBLIC_URL: http://localhost:3001
+    volumes:
+      - node-b-data:/data
+
+  node-c:
+    <<: *node
+    hostname: node-c
+    environment:
+      <<: *node-env
+      SYNAPSE_NODE_ID: node-c
+      SYNAPSE_ADVERTISE: node-c:7000
+      SYNAPSE_PEERS: node-a:7000
+      SYNAPSE_PUBLIC_URL: http://localhost:3002
+    volumes:
+      - node-c-data:/data
+
+  web-a:
+    <<: *web
+    environment:
+      SYNAPSE_API_UPSTREAM: node-a:8000
+    ports:
+      - "3000:80"
+    depends_on:
+      - node-a
+
+  web-b:
+    <<: *web
+    environment:
+      SYNAPSE_API_UPSTREAM: node-b:8000
+    ports:
+      - "3001:80"
+    depends_on:
+      - node-b
+
+  web-c:
+    <<: *web
+    environment:
+      SYNAPSE_API_UPSTREAM: node-c:8000
+    ports:
+      - "3002:80"
+    depends_on:
+      - node-c
+
+  mailpit:
+    image: docker.io/axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+
+  ftp:
+    build:
+      context: ./infra/ftp
+    image: localhost/synapse-ftp:latest
+    restart: unless-stopped
+
+volumes:
+  node-a-data:
+  node-b-data:
+  node-c-data:
